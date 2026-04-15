@@ -4,12 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>UNZIP ANYTHING!</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Inter', sans-serif;
     background: #0a0a0a;
@@ -21,7 +18,6 @@
     justify-content: center;
     padding: 20px;
   }
-
   h1 {
     font-size: clamp(2.5rem, 8vw, 5rem);
     font-weight: 900;
@@ -34,13 +30,7 @@
     margin-bottom: 8px;
     text-align: center;
   }
-
-  .subtitle {
-    color: #888;
-    font-size: 1rem;
-    margin-bottom: 40px;
-    text-align: center;
-  }
+  .subtitle { color: #888; font-size: 1rem; margin-bottom: 40px; text-align: center; }
   .subtitle span { color: #f7c948; }
 
   #drop-zone {
@@ -52,188 +42,100 @@
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
-    position: relative;
     background: #111;
   }
-  #drop-zone:hover, #drop-zone.drag-over {
-    border-color: #f7c948;
-    background: #1a1800;
-  }
+  #drop-zone:hover, #drop-zone.drag-over { border-color: #f7c948; background: #1a1800; }
   #drop-zone .icon { font-size: 3rem; margin-bottom: 12px; }
   #drop-zone .label { font-size: 1.1rem; font-weight: 700; color: #ccc; }
   #drop-zone .sub { font-size: 0.85rem; color: #555; margin-top: 6px; }
   #file-input { display: none; }
 
-  #status {
-    margin-top: 30px;
-    width: 100%;
-    max-width: 560px;
-    display: none;
-  }
-
+  #status { margin-top: 30px; width: 100%; max-width: 560px; display: none; }
   .step {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 18px;
-    border-radius: 10px;
-    background: #111;
-    margin-bottom: 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #555;
-    transition: all 0.3s;
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 18px; border-radius: 10px; background: #111;
+    margin-bottom: 8px; font-size: 0.95rem; font-weight: 700;
+    color: #555; transition: all 0.3s;
   }
   .step.active { color: #f7c948; background: #1a1800; }
   .step.done { color: #4ade80; background: #0a1a0f; }
   .step.done .dot { background: #4ade80; }
   .step.active .dot { background: #f7c948; animation: pulse 0.8s infinite; }
-  .dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    background: #333;
-    flex-shrink: 0;
-  }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; flex-shrink: 0; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-
-  #result {
-    margin-top: 20px;
-    width: 100%;
-    max-width: 560px;
+  .name-transform {
     display: none;
+    align-items: center; justify-content: center;
+    gap: 10px; margin-top: 16px; font-size: 0.9rem; font-weight: 700;
+    flex-wrap: wrap;
   }
+  .name-pill { padding: 6px 14px; border-radius: 99px; font-family: monospace; font-size: 0.82rem; }
+  .name-pill.original { background: #1a1a1a; border: 1px solid #333; color: #aaa; }
+  .name-pill.zipped { background: #1a1000; border: 1px solid #f7c94855; color: #f7c948; }
+  .name-pill.extracted { background: #0a1a0f; border: 1px solid #4ade8055; color: #4ade80; }
+  .arrow { color: #444; font-size: 1.1rem; }
 
-  .result-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .result-title {
-    font-size: 1.1rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #4ade80;
-  }
-  .badge {
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 99px;
-    background: #4ade8022;
-    color: #4ade80;
-    border: 1px solid #4ade8044;
-  }
+  #result { margin-top: 20px; width: 100%; max-width: 560px; display: none; }
+  .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .result-title { font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; color: #4ade80; }
+  .badge { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: #4ade8022; color: #4ade80; border: 1px solid #4ade8044; }
 
-  .file-entry {
-    background: #111;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
+  .file-entry { background: #111; border-radius: 10px; padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; }
   .file-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
   .file-info { flex: 1; min-width: 0; }
-  .file-name {
-    font-weight: 700;
-    font-size: 0.95rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #eee;
-  }
+  .file-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #eee; }
   .file-size { font-size: 0.78rem; color: #555; margin-top: 2px; }
-
   .preview-text {
-    background: #0d0d0d;
-    border: 1px solid #222;
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-family: monospace;
-    font-size: 0.78rem;
-    color: #888;
-    margin-top: 8px;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 100px;
-    overflow-y: auto;
+    background: #0d0d0d; border: 1px solid #222; border-radius: 8px;
+    padding: 10px 12px; font-family: monospace; font-size: 0.78rem;
+    color: #888; margin-top: 8px; white-space: pre-wrap; word-break: break-all;
+    max-height: 100px; overflow-y: auto;
   }
-
+  .preview-img { max-width: 100%; max-height: 140px; border-radius: 8px; margin-top: 8px; display: block; }
   .download-btn {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 5px 12px;
-    border-radius: 6px;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    color: #aaa;
-    font-size: 0.78rem;
-    font-weight: 700;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.15s;
+    display: inline-block; margin-top: 8px; padding: 5px 12px;
+    border-radius: 6px; background: #1a1a1a; border: 1px solid #333;
+    color: #aaa; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+    text-decoration: none; transition: all 0.15s;
   }
   .download-btn:hover { border-color: #f7c948; color: #f7c948; }
 
-  #funny-line {
-    margin-top: 20px;
-    font-size: 1.2rem;
-    font-weight: 900;
-    text-align: center;
-    color: #f7c948;
-    display: none;
-  }
+  #funny-line { margin-top: 20px; font-size: 1.15rem; font-weight: 900; text-align: center; color: #f7c948; display: none; }
 
   .reset-btn {
-    margin-top: 24px;
-    padding: 12px 28px;
-    border-radius: 10px;
-    border: none;
-    background: linear-gradient(135deg, #f7c948, #ff6b35);
-    color: #000;
-    font-size: 1rem;
-    font-weight: 900;
-    text-transform: uppercase;
-    cursor: pointer;
-    display: none;
-    letter-spacing: 1px;
-    transition: opacity 0.2s;
+    margin-top: 24px; padding: 12px 28px; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, #f7c948, #ff6b35); color: #000;
+    font-size: 1rem; font-weight: 900; text-transform: uppercase; cursor: pointer;
+    display: none; letter-spacing: 1px; transition: opacity 0.2s;
   }
   .reset-btn:hover { opacity: 0.85; }
-
-  .zip-size-note {
-    font-size: 0.78rem;
-    color: #555;
-    text-align: center;
-    margin-top: 8px;
-    display: none;
-  }
 </style>
 </head>
 <body>
 
 <h1>⚡ Unzip Anything!</h1>
-<p class="subtitle">Upload <span>any file</span>. We'll zip it. Then unzip it. You're welcome.</p>
+<p class="subtitle">Upload <span>any file</span>. We rename it to a ZIP. Then "unzip" it. Totally legit.</p>
 
 <div id="drop-zone" onclick="document.getElementById('file-input').click()">
   <div class="icon">📦</div>
   <div class="label">Drop any file here</div>
-  <div class="sub">or click to browse</div>
+  <div class="sub">or click to browse · yes, anything</div>
   <input type="file" id="file-input">
 </div>
 
 <div id="status">
   <div class="step" id="step-read"><div class="dot"></div>Reading your file...</div>
-  <div class="step" id="step-zip"><div class="dot"></div>Cramming it into a ZIP...</div>
-  <div class="step" id="step-unzip"><div class="dot"></div>Heroically extracting it...</div>
-  <div class="step" id="step-show"><div class="dot"></div>Showing you the goods...</div>
+  <div class="step" id="step-rename"><div class="dot"></div>Renaming it to .zip 🤫</div>
+  <div class="step" id="step-unzip"><div class="dot"></div>Heroically unzipping it...</div>
+  <div class="step" id="step-show"><div class="dot"></div>Presenting the extracted file...</div>
+  <div class="name-transform" id="name-transform">
+    <span class="name-pill original" id="name-original"></span>
+    <span class="arrow">→</span>
+    <span class="name-pill zipped" id="name-zipped"></span>
+    <span class="arrow">→</span>
+    <span class="name-pill extracted" id="name-extracted"></span>
+  </div>
 </div>
 
 <p id="funny-line"></p>
@@ -241,12 +143,10 @@
 <div id="result">
   <div class="result-header">
     <div class="result-title">📂 Extracted</div>
-    <div class="badge" id="result-badge">1 file</div>
+    <div class="badge">1 file</div>
   </div>
   <div id="file-list"></div>
 </div>
-
-<p class="zip-size-note" id="zip-size-note"></p>
 
 <button class="reset-btn" id="reset-btn" onclick="reset()">Do Another One</button>
 
@@ -263,139 +163,116 @@ const funnyLines = [
   "Incredible. You've achieved nothing, but look how fast.",
   "The ZIP was scared. You won.",
   "Your file went on a journey and came back unchanged. Powerful.",
-  "zipped. unzipped. you're basically a wizard.",
+  "Zipped. Unzipped. You're basically a wizard.",
   "Compression? Defeated. Extraction? Mastered. You? Unstoppable.",
   "The file screamed going in. It screamed coming out. It's fine.",
   "NASA uses this technology.",
   "Your file is the same. You are changed.",
   "0 files lost. 0 regrets.",
-  "If this were a resume skill, you'd list it.",
+  "Crime? Maybe. Results? Absolutely.",
+  "The ZIP format had no idea what hit it.",
+  "Windows would never allow this. Good thing you're here.",
 ];
 
 function getIcon(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  const map = {
-    txt: '📄', js: '📜', json: '🗂️', html: '🌐', css: '🎨',
-    png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🎞️', webp: '🖼️',
-    mp4: '🎬', mp3: '🎵', wav: '🎵', pdf: '📕', zip: '📦',
-    py: '🐍', md: '📝', csv: '📊', xml: '📋', svg: '🎨',
-  };
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  const map = { txt:'📄',js:'📜',json:'🗂️',html:'🌐',css:'🎨',png:'🖼️',jpg:'🖼️',jpeg:'🖼️',gif:'🎞️',webp:'🖼️',mp4:'🎬',mp3:'🎵',wav:'🎵',pdf:'📕',zip:'📦',py:'🐍',md:'📝',csv:'📊',xml:'📋',svg:'🎨' };
   return map[ext] || '📁';
 }
 
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(2) + ' MB';
 }
 
 function setStep(id) {
-  ['step-read','step-zip','step-unzip','step-show'].forEach(s => {
+  const steps = ['step-read','step-rename','step-unzip','step-show'];
+  let reached = false;
+  for (const s of steps) {
     const el = document.getElementById(s);
-    if (el.id === id) { el.classList.add('active'); el.classList.remove('done'); }
-    else if (el.classList.contains('active')) { el.classList.remove('active'); el.classList.add('done'); }
-  });
+    if (s === id) { el.classList.remove('done'); el.classList.add('active'); reached = true; }
+    else if (!reached) { el.classList.remove('active'); el.classList.add('done'); }
+  }
 }
 
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+const delay = ms => new Promise(r => setTimeout(r, ms));
 
 async function handleFile(file) {
   if (!file) return;
   dropZone.style.display = 'none';
   document.getElementById('status').style.display = 'block';
 
-  // Step 1: read
   setStep('step-read');
   await delay(500);
   const arrayBuffer = await file.arrayBuffer();
 
-  // Step 2: zip
-  setStep('step-zip');
-  await delay(700);
-  const zip = new JSZip();
-  zip.file(file.name, arrayBuffer);
-  const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  setStep('step-rename');
+  const originalName = file.name;
+  const zippedName = file.name + '.zip';
+  document.getElementById('name-original').textContent = originalName;
+  document.getElementById('name-zipped').textContent = zippedName;
+  document.getElementById('name-extracted').textContent = originalName;
+  await delay(900);
+  document.getElementById('name-transform').style.display = 'flex';
 
-  // Step 3: unzip
   setStep('step-unzip');
-  await delay(700);
-  const unzipped = await JSZip.loadAsync(zipBlob);
+  await delay(900);
 
-  // Step 4: show
   setStep('step-show');
   await delay(400);
-  // mark last done
   document.getElementById('step-show').classList.remove('active');
   document.getElementById('step-show').classList.add('done');
 
   // Funny line
-  const funnyEl = document.getElementById('funny-line');
-  funnyEl.textContent = funnyLines[Math.floor(Math.random() * funnyLines.length)];
-  funnyEl.style.display = 'block';
-
-  // Zip size note
-  const zipNote = document.getElementById('zip-size-note');
-  zipNote.textContent = `ZIP was ${formatSize(zipBlob.size)} (original: ${formatSize(file.size)})`;
-  zipNote.style.display = 'block';
+  const lines = funnyLines;
+  document.getElementById('funny-line').textContent = lines[Math.floor(Math.random() * lines.length)];
+  document.getElementById('funny-line').style.display = 'block';
 
   // Result
-  const fileList = document.getElementById('file-list');
-  fileList.innerHTML = '';
-  const names = Object.keys(unzipped.files).filter(n => !unzipped.files[n].dir);
-  document.getElementById('result-badge').textContent = names.length + (names.length === 1 ? ' file' : ' files');
+  const data = new Uint8Array(arrayBuffer);
+  const ext = (originalName.split('.').pop() || '').toLowerCase();
+  const isText = ['txt','js','json','html','css','py','md','csv','xml','svg','ts','jsx','tsx','sh','bat','log','yaml','yml','ini','cfg','toml'].includes(ext);
+  const isImage = ['png','jpg','jpeg','gif','webp','bmp'].includes(ext);
 
-  for (const name of names) {
-    const entry = unzipped.files[name];
-    const data = await entry.async('uint8array');
-    const ext = name.split('.').pop().toLowerCase();
-    const isText = ['txt','js','json','html','css','py','md','csv','xml','svg','ts','jsx','tsx','sh','bat','log','yaml','yml','ini','cfg','toml'].includes(ext);
-    const isImage = ['png','jpg','jpeg','gif','webp','bmp','svg'].includes(ext);
+  const div = document.createElement('div');
+  div.className = 'file-entry';
 
-    const div = document.createElement('div');
-    div.className = 'file-entry';
-
-    let previewHTML = '';
-    if (isText) {
-      const text = new TextDecoder().decode(data);
-      const preview = text.slice(0, 300).replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      previewHTML = `<div class="preview-text">${preview}${text.length > 300 ? '\n...' : ''}</div>`;
-    } else if (isImage) {
-      const blob = new Blob([data], { type: 'image/' + ext });
-      const url = URL.createObjectURL(blob);
-      previewHTML = `<img src="${url}" style="max-width:100%;max-height:120px;border-radius:6px;margin-top:8px;">`;
-    }
-
-    // Download button
-    const blob = new Blob([data]);
-    const dlUrl = URL.createObjectURL(blob);
-
-    div.innerHTML = `
-      <div class="file-icon">${getIcon(name)}</div>
-      <div class="file-info">
-        <div class="file-name">${name}</div>
-        <div class="file-size">${formatSize(data.byteLength)}</div>
-        ${previewHTML}
-        <a class="download-btn" href="${dlUrl}" download="${name}">⬇ Download</a>
-      </div>
-    `;
-    fileList.appendChild(div);
+  let previewHTML = '';
+  if (isText) {
+    const text = new TextDecoder().decode(data);
+    const preview = text.slice(0, 300).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    previewHTML = `<div class="preview-text">${preview}${text.length > 300 ? '\n...' : ''}</div>`;
+  } else if (isImage) {
+    const blob = new Blob([data], { type: 'image/' + ext });
+    const url = URL.createObjectURL(blob);
+    previewHTML = `<img class="preview-img" src="${url}">`;
   }
 
+  const blob = new Blob([data]);
+  const dlUrl = URL.createObjectURL(blob);
+
+  div.innerHTML = `
+    <div class="file-icon">${getIcon(originalName)}</div>
+    <div class="file-info">
+      <div class="file-name">${originalName}</div>
+      <div class="file-size">${formatSize(data.byteLength)}</div>
+      ${previewHTML}
+      <a class="download-btn" href="${dlUrl}" download="${originalName}">⬇ Download</a>
+    </div>
+  `;
+  document.getElementById('file-list').appendChild(div);
   document.getElementById('result').style.display = 'block';
   document.getElementById('reset-btn').style.display = 'inline-block';
 }
 
 function reset() {
   dropZone.style.display = 'block';
-  document.getElementById('status').style.display = 'none';
-  document.getElementById('result').style.display = 'none';
-  document.getElementById('funny-line').style.display = 'none';
-  document.getElementById('zip-size-note').style.display = 'none';
-  document.getElementById('reset-btn').style.display = 'none';
+  ['status','result','funny-line','reset-btn'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('name-transform').style.display = 'none';
   document.getElementById('file-list').innerHTML = '';
-  ['step-read','step-zip','step-unzip','step-show'].forEach(s => {
-    const el = document.getElementById(s);
-    el.classList.remove('active','done');
+  ['step-read','step-rename','step-unzip','step-show'].forEach(s => {
+    document.getElementById(s).classList.remove('active','done');
   });
   fileInput.value = '';
 }
