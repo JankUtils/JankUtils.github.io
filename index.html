@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fake File → ZIP Extractor 😄</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e2f;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+    .box {
+      background: #2a2a40;
+      padding: 20px;
+      border-radius: 12px;
+      display: inline-block;
+      width: 400px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      background: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    #output {
+      margin-top: 20px;
+      text-align: left;
+      background: #111;
+      padding: 10px;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <h2>📦 Fake ZIP Extractor</h2>
+    <input type="file" id="fileInput">
+    <br>
+    <button onclick="processFile()">Rename → Extract</button>
+
+    <div id="output"></div>
+  </div>
+
+  <script>
+    async function processFile() {
+      const fileInput = document.getElementById("fileInput");
+      const output = document.getElementById("output");
+      output.innerHTML = "";
+
+      if (!fileInput.files.length) {
+        output.innerHTML = "❌ No file selected!";
+        return;
+      }
+
+      const file = fileInput.files[0];
+
+      // "Rename" it (just for display)
+      const fakeZipName = file.name.split('.')[0] + ".zip";
+
+      output.innerHTML += `📄 Original: ${file.name}<br>`;
+      output.innerHTML += `🔁 Renamed to: ${fakeZipName}<br><br>`;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const zip = await JSZip.loadAsync(arrayBuffer);
+
+        output.innerHTML += "✅ ZIP detected! Extracting...<br><br>";
+
+        zip.forEach(async (relativePath, zipEntry) => {
+          if (!zipEntry.dir) {
+            const content = await zipEntry.async("string");
+            output.innerHTML += `<b>📁 ${relativePath}</b><br>`;
+            output.innerHTML += `<pre>${escapeHtml(content)}</pre><hr>`;
+          }
+        });
+
+      } catch (err) {
+        output.innerHTML += "⚠️ Not a valid ZIP file (renaming alone doesn't convert it 😄)<br>";
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, function (m) {
+        return ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        })[m];
+      });
+    }
+  </script>
+
+</body>
+</html>
