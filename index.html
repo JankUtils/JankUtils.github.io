@@ -182,8 +182,7 @@ const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const fpsSlider = document.getElementById('fps-slider');
 const fpsVal = document.getElementById('fps-val');
-const maxSlider = document.getElementById('maxframes-slider');
-const maxVal = document.getElementById('maxframes-val');
+
 const goBtn = document.getElementById('go-btn');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
@@ -192,7 +191,7 @@ const video = document.getElementById('video');
 let currentFile = null;
 
 fpsSlider.addEventListener('input', () => fpsVal.textContent = fpsSlider.value + ' fps');
-maxSlider.addEventListener('input', () => maxVal.textContent = maxSlider.value);
+
 
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
