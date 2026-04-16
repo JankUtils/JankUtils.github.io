@@ -243,9 +243,7 @@ async function extractFrames(file, fps) {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        // Strip the data URL prefix, keep only the base64 part with correct header
-        const base64 = dataUrl.replace(/^data:image\/jpeg;base64,/, '');
-        frames.push('image/jpeg;base64,' + base64);
+        frames.push(dataUrl);
 
         // Add thumbnail every ~10 frames
         if (i % Math.max(1, Math.floor(total / 20)) === 0) {
@@ -312,7 +310,7 @@ goBtn.addEventListener('click', async () => {
       }
 
       slide.addImage({
-        data: frames[i],
+        data: frames[i].replace(/^data:/, ''),
         x: imgX, y: imgY, w: imgW, h: imgH
       });
 
