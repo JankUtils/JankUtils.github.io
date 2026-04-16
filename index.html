@@ -242,6 +242,8 @@ async function extractFrames(file, fps) {
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0);
         const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+        // Validate: a blank/failed frame returns 'data:,' or very short string
+        if (!dataUrl || dataUrl.length < 100 || !dataUrl.startsWith('data:image/jpeg;base64,')) continue;
         frames.push(dataUrl);
 
         // Add thumbnail every ~10 frames
@@ -308,8 +310,10 @@ goBtn.addEventListener('click', async () => {
         imgY = 0;
       }
 
+      // PptxGenJS needs "image/jpeg;base64,..." — strip only the "data:" prefix
+      const imgData = frames[i].startsWith('data:') ? frames[i].slice(5) : frames[i];
       slide.addImage({
-        data: frames[i],
+        data: imgData,
         x: imgX, y: imgY, w: imgW, h: imgH
       });
 
