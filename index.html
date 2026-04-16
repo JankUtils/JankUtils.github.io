@@ -216,53 +216,8 @@ function setProgress(pct, label) {
 
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-async function extractFrames(file, fps) {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    video.src = url;
-    video.load();
 
-    video.addEventListener('loadedmetadata', async () => {
-      const duration = video.duration;
-      const interval = 1 / fps;
-      const total = Math.floor(duration / interval);
-      const frames = [];
 
-      // Show preview strip early
-      document.getElementById('preview-wrap').style.display = 'block';
-
-      for (let i = 0; i < total; i++) {
-        const t = i * interval;
-        video.currentTime = t;
-        await new Promise(res => {
-          video.addEventListener('seeked', res, { once: true });
-        });
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-        if (!dataUrl || dataUrl.length < 100 || !dataUrl.startsWith('data:image/jpeg;base64,')) continue;
-        frames.push(dataUrl);
-
-        // Add thumbnail every ~10 frames
-        if (i % Math.max(1, Math.floor(total / 20)) === 0) {
-          const img = document.createElement('img');
-          img.src = dataUrl;
-          document.getElementById('preview-strip').appendChild(img);
-        }
-
-        setProgress(Math.round((i / total) * 50), `Extracting frame ${i + 1} / ${total}`);
-        await delay(0); // yield to browser
-      }
-
-      URL.revokeObjectURL(url);
-      resolve({ frames, width: video.videoWidth, height: video.videoHeight });
-    }, { once: true });
-
-    video.addEventListener('error', reject, { once: true });
-  });
-}
 
 goBtn.addEventListener('click', async () => {
   if (!currentFile) return;
@@ -271,71 +226,102 @@ goBtn.addEventListener('click', async () => {
 
   const fps = parseInt(fpsSlider.value);
   const aspect = document.getElementById('aspect-select').value;
+  const slideW = aspect === '16x9' ? 10 : 10;
+  const slideH = aspect === '16x9' ? 5.625 : 7.5;
 
   try {
     setProgress(0, 'Loading video...');
-    const { frames, width, height } = await extractFrames(currentFile, fps);
 
-    setProgress(50, 'Building PPTX...');
-    await delay(50);
+    const url = URL.createObjectURL(currentFile);
+    video.src = url;
+    video.load();
+
+    await new Promise((res, rej) => {
+      video.addEventListener('loadedmetadata', res, { once: true });
+      video.addEventListener('error', rej, { once: true });
+    });
+
+    const duration = video.duration;
+    const interval = 1 / fps;
+    const total = Math.floor(duration / interval);
+    const vidW = video.videoWidth;
+    const vidH = video.videoHeight;
+
+    // Pre-calc image placement
+    const imgRatio = vidW / vidH;
+    const slideRatio = slideW / slideH;
+    let imgW, imgH, imgX, imgY;
+    if (imgRatio > slideRatio) {
+      imgW = slideW; imgH = slideW / imgRatio;
+      imgX = 0; imgY = (slideH - imgH) / 2;
+    } else {
+      imgH = slideH; imgW = slideH * imgRatio;
+      imgX = (slideW - imgW) / 2; imgY = 0;
+    }
+
+    canvas.width = vidW;
+    canvas.height = vidH;
+
+    document.getElementById('preview-wrap').style.display = 'block';
 
     const pres = new PptxGenJS();
     pres.layout = aspect === '16x9' ? 'LAYOUT_16x9' : 'LAYOUT_4x3';
 
-    // Slide dimensions
-    const slideW = aspect === '16x9' ? 10 : 10;
-    const slideH = aspect === '16x9' ? 5.625 : 7.5;
+    let slideCount = 0;
 
-    for (let i = 0; i < frames.length; i++) {
-      const slide = pres.addSlide();
-      slide.background = { color: '000000' };
+    for (let i = 0; i < total; i++) {
+      video.currentTime = i * interval;
+      await new Promise(res => video.addEventListener('seeked', res, { once: true }));
 
-      // Fit frame to fill entire slide, letterboxing if needed
-      const imgRatio = width / height;
-      const slideRatio = slideW / slideH;
+      ctx.drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-      let imgW, imgH, imgX, imgY;
-      if (imgRatio > slideRatio) {
-        // wider than slide — fit width
-        imgW = slideW;
-        imgH = slideW / imgRatio;
-        imgX = 0;
-        imgY = (slideH - imgH) / 2;
-      } else {
-        // taller than slide — fit height
-        imgH = slideH;
-        imgW = slideH * imgRatio;
-        imgX = (slideW - imgW) / 2;
-        imgY = 0;
+      // Skip blank frames
+      if (!dataUrl || dataUrl.length < 100 || !dataUrl.startsWith('data:image/jpeg;base64,')) continue;
+
+      // Preview strip (every ~20 frames)
+      if (i % Math.max(1, Math.floor(total / 20)) === 0) {
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        document.getElementById('preview-strip').appendChild(img);
       }
 
-      const imgData = frames[i].startsWith('data:') ? frames[i].slice(5) : frames[i];
+      const slide = pres.addSlide();
+      slide.background = { color: '000000' };
       slide.addImage({
-        data: imgData,
+        data: dataUrl.slice(5), // strip "data:" → "image/jpeg;base64,..."
         x: imgX, y: imgY, w: imgW, h: imgH
       });
+      slideCount++;
 
-      if (i % 10 === 0) {
-        setProgress(50 + Math.round((i / frames.length) * 48), `Building slide ${i + 1} / ${frames.length}`);
+      if (i % 5 === 0) {
+        setProgress(Math.round((i / total) * 80), `Frame ${i + 1} / ${total}`);
         await delay(0);
       }
     }
 
-    setProgress(99, 'Saving file...');
+    URL.revokeObjectURL(url);
+
+    setProgress(85, 'Compressing PPTX...');
     await delay(50);
 
-    const baseName = currentFile.name.replace(/\.[^.]+$/, '');
     const blob = await pres.write({ outputType: 'blob' });
-    const url = URL.createObjectURL(blob);
+
+    setProgress(98, 'Triggering download...');
+    await delay(50);
+
+    const dlUrl = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `${baseName}-frames.pptx`;
+    a.href = dlUrl;
+    a.download = currentFile.name.replace(/\.[^.]+$/, '') + '-frames.pptx';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(dlUrl), 5000);
 
     setProgress(100, 'Done!');
     document.getElementById('done-wrap').style.display = 'block';
-    document.getElementById('done-msg').textContent = `✅ ${frames.length} slides exported!`;
+    document.getElementById('done-msg').textContent = `✅ ${slideCount} slides exported!`;
 
   } catch (err) {
     setProgress(0, 'Error: ' + err.message);
