@@ -290,7 +290,7 @@ goBtn.addEventListener('click', async () => {
     setProgress(50, 'Building PPTX...');
     await delay(50);
 
-    const pres = new pptxgen();
+    const pres = new PptxGenJS();
     pres.layout = aspect === '16x9' ? 'LAYOUT_16x9' : 'LAYOUT_4x3';
 
     // Slide dimensions
