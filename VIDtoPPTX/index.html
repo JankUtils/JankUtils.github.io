@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>JankyUtils</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+:root {
+  --bg: #0f172a;
+  --panel: rgba(255,255,255,0.06);
+  --card: rgba(255,255,255,0.08);
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+}
+
+body.light {
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --accent: #0284c7;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  padding: 30px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3em;
+}
+
+p {
+  color: var(--muted);
+  margin-top: 8px;
+}
+
+/* SEARCH */
+.search {
+  margin: 20px auto;
+  max-width: 500px;
+  display: flex;
+  gap: 10px;
+}
+
+.search input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+/* BUTTON */
+.toggle {
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--panel);
+  border: none;
+  color: var(--text);
+}
+
+/* GRID */
+.section {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.category {
+  margin: 30px 0 10px;
+  font-size: 1.3em;
+  color: var(--muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+/* CARD */
+.card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 15px;
+  transition: 0.3s;
+  text-decoration: none;
+  color: var(--text);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+}
+
+.icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  color: var(--accent);
+}
+
+.title {
+  font-weight: bold;
+}
+
+.desc {
+  font-size: 0.9em;
+  color: var(--muted);
+  margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>⚙️ JankyUtils</h1>
+  <p>Weird tools. Simple power. No nonsense.</p>
+
+  <div class="search">
+    <input type="text" id="search" placeholder="Search tools...">
+    <button class="toggle" onclick="toggleTheme()">🌙</button>
+  </div>
+</header>
+
+<div class="section">
+
+  <div class="category">📁 Media Tools</div>
+  <div class="grid">
+
+    <a class="card tool" href="/VIDtoPPTX">
+      <div class="icon"><i class="fa-solid fa-video"></i></div>
+      <div class="title">VID to PPTX</div>
+      <div class="desc">Convert video into slides</div>
+    </a>
+
+  </div>
+
+  <div class="category">🧪 Experimental</div>
+  <div class="grid">
+
+    <a class="card tool" href="#">
+      <div class="icon"><i class="fa-solid fa-flask"></i></div>
+      <div class="title">More Tools Soon</div>
+      <div class="desc">New experiments coming</div>
+    </a>
+
+  </div>
+
+</div>
+
+<script>
+function toggleTheme() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light"));
+}
+
+if (localStorage.getItem("theme") === "true") {
+  document.body.classList.add("light");
+}
+
+// SEARCH FILTER
+const search = document.getElementById("search");
+const tools = document.querySelectorAll(".tool");
+
+search.addEventListener("input", () => {
+  const value = search.value.toLowerCase();
+
+  tools.forEach(tool => {
+    const text = tool.innerText.toLowerCase();
+    tool.style.display = text.includes(value) ? "block" : "none";
+  });
+});
+</script>
+
+</body>
+</html>
