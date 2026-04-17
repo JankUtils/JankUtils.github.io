@@ -2,199 +2,380 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JankyUtils</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<title>Video → PPTX</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-:root {
-  --bg: #0f172a;
-  --panel: rgba(255,255,255,0.06);
-  --card: rgba(255,255,255,0.08);
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --accent: #38bdf8;
-}
-
-body.light {
-  --bg: #f1f5f9;
-  --panel: #ffffff;
-  --card: #ffffff;
-  --text: #0f172a;
-  --muted: #475569;
-  --accent: #0284c7;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-}
-
-/* HEADER */
-header {
-  padding: 30px;
-  text-align: center;
-}
-
-h1 {
-  font-size: 3em;
-}
-
-p {
-  color: var(--muted);
-  margin-top: 8px;
-}
-
-/* SEARCH */
-.search {
-  margin: 20px auto;
-  max-width: 500px;
-  display: flex;
-  gap: 10px;
-}
-
-.search input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-}
-
-/* BUTTON */
-.toggle {
-  padding: 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  background: var(--panel);
-  border: none;
-  color: var(--text);
-}
-
-/* GRID */
-.section {
-  max-width: 1100px;
-  margin: auto;
-  padding: 20px;
-}
-
-.category {
-  margin: 30px 0 10px;
-  font-size: 1.3em;
-  color: var(--muted);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 15px;
-}
-
-/* CARD */
-.card {
-  background: var(--card);
-  padding: 20px;
-  border-radius: 15px;
-  transition: 0.3s;
-  text-decoration: none;
-  color: var(--text);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-.card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-}
-
-.icon {
-  font-size: 28px;
-  margin-bottom: 10px;
-  color: var(--accent);
-}
-
-.title {
-  font-weight: bold;
-}
-
-.desc {
-  font-size: 0.9em;
-  color: var(--muted);
-  margin-top: 5px;
-}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { font-size: clamp(2rem, 7vw, 4.5rem); font-weight: 900; text-transform: uppercase; letter-spacing: -2px; background: linear-gradient(135deg, #a78bfa, #f472b6, #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; text-align: center; }
+  .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 36px; text-align: center; }
+  .subtitle span { color: #a78bfa; }
+  #drop-zone { width: 100%; max-width: 560px; border: 3px dashed #2a2a2a; border-radius: 16px; padding: 50px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #111; }
+  #drop-zone:hover, #drop-zone.drag-over { border-color: #a78bfa; background: #130e1e; }
+  #drop-zone .icon { font-size: 3rem; margin-bottom: 12px; }
+  #drop-zone .label { font-size: 1.05rem; font-weight: 700; color: #ccc; }
+  #drop-zone .sub { font-size: 0.82rem; color: #444; margin-top: 6px; }
+  #file-input { display: none; }
+  .settings { width: 100%; max-width: 560px; margin-top: 20px; display: none; gap: 12px; flex-direction: column; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; background: #111; border-radius: 10px; padding: 12px 16px; }
+  .setting-label { font-size: 0.88rem; font-weight: 700; color: #aaa; }
+  .setting-label small { display: block; color: #444; font-weight: 400; margin-top: 2px; font-size: 0.75rem; }
+  .setting-value { font-size: 0.95rem; font-weight: 900; color: #a78bfa; min-width: 60px; text-align: right; }
+  input[type=range] { -webkit-appearance: none; width: 140px; height: 4px; background: #2a2a2a; border-radius: 2px; outline: none; margin-left: 12px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #a78bfa; cursor: pointer; }
+  select { background: #1a1a1a; border: 1px solid #333; color: #eee; padding: 6px 10px; border-radius: 8px; font-size: 0.88rem; font-family: inherit; outline: none; cursor: pointer; }
+  .go-btn { width: 100%; max-width: 560px; margin-top: 16px; padding: 14px; border-radius: 12px; border: none; background: linear-gradient(135deg, #a78bfa, #f472b6); color: #fff; font-size: 1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: none; transition: opacity 0.2s; }
+  .go-btn:hover { opacity: 0.88; }
+  .go-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  #progress-wrap { width: 100%; max-width: 560px; margin-top: 20px; display: none; }
+  .progress-bar-bg { background: #1a1a1a; border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 10px; }
+  .progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #a78bfa, #f472b6); border-radius: 99px; transition: width 0.15s; }
+  #progress-label { font-size: 0.85rem; color: #666; text-align: center; font-weight: 700; }
+  #preview-wrap { width: 100%; max-width: 560px; margin-top: 20px; display: none; }
+  .preview-title { font-size: 0.78rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  #preview-strip { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+  #preview-strip img { height: 60px; border-radius: 6px; flex-shrink: 0; border: 1px solid #222; }
+  #done-wrap { margin-top: 24px; text-align: center; display: none; }
+  #done-msg { font-size: 1.1rem; font-weight: 900; color: #4ade80; margin-bottom: 16px; }
+  .reset-btn { padding: 11px 26px; border-radius: 10px; border: 1px solid #2a2a2a; background: #1a1a1a; color: #aaa; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+  .reset-btn:hover { border-color: #a78bfa; color: #a78bfa; }
+  canvas { display: none; }
 </style>
 </head>
-
 <body>
 
-<header>
-  <h1>⚙️ JankyUtils</h1>
-  <p>Weird tools. Simple power. No nonsense.</p>
+<h1>🎬 Video → PPTX</h1>
+<p class="subtitle">Upload a <span>video or GIF</span>. Every frame becomes a slide.</p>
 
-  <div class="search">
-    <input type="text" id="search" placeholder="Search tools...">
-    <button class="toggle" onclick="toggleTheme()">🌙</button>
-  </div>
-</header>
-
-<div class="section">
-
-  <div class="category">📁 Media Tools</div>
-  <div class="grid">
-
-    <a class="card tool" href="/VIDtoPPTX">
-      <div class="icon"><i class="fa-solid fa-video"></i></div>
-      <div class="title">VID to PPTX</div>
-      <div class="desc">Convert video into slides</div>
-    </a>
-
-  </div>
-
-  <div class="category">🧪 Experimental</div>
-  <div class="grid">
-
-    <a class="card tool" href="#">
-      <div class="icon"><i class="fa-solid fa-flask"></i></div>
-      <div class="title">More Tools Soon</div>
-      <div class="desc">New experiments coming</div>
-    </a>
-
-  </div>
-
+<div id="drop-zone" onclick="document.getElementById('file-input').click()">
+  <div class="icon">🎞️</div>
+  <div class="label">Drop your video or GIF here</div>
+  <div class="sub">MP4, WebM, MOV, GIF · processed entirely in your browser</div>
+  <input type="file" id="file-input" accept="video/*,.gif">
 </div>
 
+<div class="settings" id="settings">
+  <div class="setting-row">
+    <div class="setting-label">Frames per second<small>How many frames to capture each second</small></div>
+    <div style="display:flex;align-items:center">
+      <input type="range" id="fps-slider" min="1" max="30" value="30">
+      <div class="setting-value" id="fps-val">30 fps</div>
+    </div>
+  </div>
+  <div class="setting-row">
+    <div class="setting-label">JPEG quality<small>Lower = smaller file, faster export</small></div>
+    <div style="display:flex;align-items:center">
+      <input type="range" id="quality-slider" min="10" max="95" value="55" step="5">
+      <div class="setting-value" id="quality-val">55%</div>
+    </div>
+  </div>
+  <div class="setting-row">
+    <div class="setting-label">Resolution scale<small>50% = half size, much smaller file</small></div>
+    <div style="display:flex;align-items:center">
+      <input type="range" id="scale-slider" min="10" max="100" value="50" step="10">
+      <div class="setting-value" id="scale-val">50%</div>
+    </div>
+  </div>
+  <div class="setting-row">
+    <div class="setting-label">Slide aspect ratio<small>Match your PowerPoint layout</small></div>
+    <select id="aspect-select">
+      <option value="16x9">16:9 (Widescreen)</option>
+      <option value="4x3">4:3 (Standard)</option>
+    </select>
+  </div>
+</div>
+
+<button class="go-btn" id="go-btn">⚡ Generate PPTX</button>
+
+<div id="preview-wrap">
+  <div class="preview-title">Frame preview</div>
+  <div id="preview-strip"></div>
+</div>
+
+<div id="progress-wrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <div id="progress-label">Starting...</div>
+</div>
+
+<div id="done-wrap">
+  <div id="done-msg"></div>
+  <button class="reset-btn" onclick="reset()">Do Another One</button>
+</div>
+
+<canvas id="canvas"></canvas>
+<video id="video" style="display:none" crossorigin="anonymous"></video>
+
 <script>
-function toggleTheme() {
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light"));
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const fpsSlider = document.getElementById('fps-slider');
+const fpsVal = document.getElementById('fps-val');
+const qualitySlider = document.getElementById('quality-slider');
+const qualityVal = document.getElementById('quality-val');
+const scaleSlider = document.getElementById('scale-slider');
+const scaleVal = document.getElementById('scale-val');
+const goBtn = document.getElementById('go-btn');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const video = document.getElementById('video');
+let currentFile = null;
+
+fpsSlider.addEventListener('input', () => fpsVal.textContent = fpsSlider.value + ' fps');
+qualitySlider.addEventListener('input', () => qualityVal.textContent = qualitySlider.value + '%');
+scaleSlider.addEventListener('input', () => scaleVal.textContent = scaleSlider.value + '%');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); loadFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
+
+function loadFile(file) {
+  if (!file) return;
+  currentFile = file;
+  dropZone.querySelector('.label').textContent = file.name;
+  dropZone.querySelector('.sub').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+  document.getElementById('settings').style.display = 'flex';
+  goBtn.style.display = 'block';
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('preview-strip').innerHTML = '';
 }
 
-if (localStorage.getItem("theme") === "true") {
-  document.body.classList.add("light");
+function setProgress(pct, label) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = label;
 }
 
-// SEARCH FILTER
-const search = document.getElementById("search");
-const tools = document.querySelectorAll(".tool");
+const delay = ms => new Promise(r => setTimeout(r, ms));
 
-search.addEventListener("input", () => {
-  const value = search.value.toLowerCase();
+// ── PPTX XML builders ──────────────────────────────────────────────────────
 
-  tools.forEach(tool => {
-    const text = tool.innerText.toLowerCase();
-    tool.style.display = text.includes(value) ? "block" : "none";
-  });
+function xmlContentTypes(count) {
+  let overrides = '';
+  for (let i = 1; i <= count; i++) {
+    overrides += `\n  <Override PartName="/ppt/slides/slide${i}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`;
+  }
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="jpeg" ContentType="image/jpeg"/>
+  <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+  <Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>${overrides}
+</Types>`;
+}
+
+function xmlRootRels() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
+</Relationships>`;
+}
+
+function xmlPresentation(count, slideW, slideH) {
+  const cx = Math.round(slideW * 914400);
+  const cy = Math.round(slideH * 914400);
+  let sldIdLst = '';
+  for (let i = 1; i <= count; i++) sldIdLst += `<p:sldId id="${256 + i}" r:id="rId${i}"/>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rIdM1"/></p:sldMasterIdLst>
+  <p:sldIdLst>${sldIdLst}</p:sldIdLst>
+  <p:sldSz cx="${cx}" cy="${cy}" type="custom"/>
+  <p:notesSz cx="6858000" cy="9144000"/>
+</p:presentation>`;
+}
+
+function xmlPresentationRels(count) {
+  let rels = `<Relationship Id="rIdM1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>`;
+  for (let i = 1; i <= count; i++) rels += `\n  <Relationship Id="rId${i}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i}.xml"/>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${rels}
+</Relationships>`;
+}
+
+function xmlSlideMaster() {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldMaster xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <p:cSld><p:spTree>
+    <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+    <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>
+  </p:spTree></p:cSld>
+  <p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>
+  <p:sldLayoutIdLst/>
+</p:sldMaster>`;
+}
+
+function xmlSlide(slideW, slideH, imgW, imgH, imgX, imgY) {
+  const e = v => Math.round(v * 914400);
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+  xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <p:cSld>
+    <p:bg><p:bgPr><a:solidFill><a:srgbClr val="000000"/></a:solidFill><a:effectLst/></p:bgPr></p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>
+      <p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${e(slideW)}" cy="${e(slideH)}"/><a:chOff x="0" y="0"/><a:chExt cx="${e(slideW)}" cy="${e(slideH)}"/></a:xfrm></p:grpSpPr>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="2" name="frame"/>
+          <p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>
+          <p:nvPr/>
+        </p:nvPicPr>
+        <p:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></p:blipFill>
+        <p:spPr>
+          <a:xfrm><a:off x="${e(imgX)}" y="${e(imgY)}"/><a:ext cx="${e(imgW)}" cy="${e(imgH)}"/></a:xfrm>
+          <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+        </p:spPr>
+      </p:pic>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>
+</p:sld>`;
+}
+
+function xmlSlideRels(idx) {
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/frame${idx}.jpg"/>
+</Relationships>`;
+}
+
+// ── Main ──────────────────────────────────────────────────────────────────
+
+goBtn.addEventListener('click', async () => {
+  if (!currentFile) return;
+  goBtn.disabled = true;
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('preview-wrap').style.display = 'block';
+
+  const fps = parseInt(fpsSlider.value);
+  const quality = parseInt(qualitySlider.value) / 100;
+  const scale = parseInt(scaleSlider.value) / 100;
+  const aspect = document.getElementById('aspect-select').value;
+  const slideW = 10;
+  const slideH = aspect === '16x9' ? 5.625 : 7.5;
+
+  try {
+    setProgress(0, 'Loading video...');
+    const url = URL.createObjectURL(currentFile);
+    video.src = url;
+    await new Promise((res, rej) => {
+      video.addEventListener('loadedmetadata', res, { once: true });
+      video.addEventListener('error', rej, { once: true });
+    });
+
+    const duration = video.duration;
+    const total = Math.floor(duration * fps);
+
+    // Image placement (letterbox)
+    const vidW = video.videoWidth, vidH = video.videoHeight;
+    const imgRatio = vidW / vidH, slideRatio = slideW / slideH;
+    let imgW, imgH, imgX, imgY;
+    if (imgRatio > slideRatio) {
+      imgW = slideW; imgH = slideW / imgRatio; imgX = 0; imgY = (slideH - imgH) / 2;
+    } else {
+      imgH = slideH; imgW = slideH * imgRatio; imgX = (slideW - imgW) / 2; imgY = 0;
+    }
+
+    const cw = Math.round(vidW * scale);
+    const ch = Math.round(vidH * scale);
+    canvas.width = cw;
+    canvas.height = ch;
+
+    // Build ZIP
+    const zip = new JSZip();
+    const ppt = zip.folder('ppt');
+    const slides = ppt.folder('slides');
+    const slideRels = slides.folder('_rels');
+    const media = ppt.folder('media');
+    const masters = ppt.folder('slideMasters');
+    masters.folder('_rels').file('slideMaster1.xml.rels',
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`);
+
+    masters.file('slideMaster1.xml', xmlSlideMaster());
+    zip.folder('_rels').file('.rels', xmlRootRels());
+
+    // Stream frames into zip
+    for (let i = 0; i < total; i++) {
+      video.currentTime = i / fps;
+      await new Promise(res => video.addEventListener('seeked', res, { once: true }));
+
+      ctx.drawImage(video, 0, 0, cw, ch);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      const b64 = dataUrl.split(',')[1];
+
+      media.file(`frame${i + 1}.jpg`, b64, { base64: true });
+      slides.file(`slide${i + 1}.xml`, xmlSlide(slideW, slideH, imgW, imgH, imgX, imgY));
+      slideRels.file(`slide${i + 1}.xml.rels`, xmlSlideRels(i + 1));
+
+      if (i % Math.max(1, Math.floor(total / 20)) === 0) {
+        const img = document.createElement('img');
+        img.src = dataUrl;
+        document.getElementById('preview-strip').appendChild(img);
+      }
+
+      setProgress(2 + Math.round((i / total) * 87), `Frame ${i + 1} / ${total}`);
+      await delay(0);
+    }
+
+    URL.revokeObjectURL(url);
+
+    // Add remaining XML now that we know total
+    zip.file('[Content_Types].xml', xmlContentTypes(total));
+    ppt.file('presentation.xml', xmlPresentation(total, slideW, slideH));
+    ppt.folder('_rels').file('presentation.xml.rels', xmlPresentationRels(total));
+
+    setProgress(90, 'Zipping...');
+    await delay(50);
+
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+      streamFiles: true
+    }, meta => {
+      setProgress(90 + Math.round(meta.percent * 0.09), `Zipping... ${Math.round(meta.percent)}%`);
+    });
+
+    setProgress(100, 'Done!');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = currentFile.name.replace(/\.[^.]+$/, '') + '-frames.pptx';
+    a.click();
+
+    document.getElementById('done-wrap').style.display = 'block';
+    document.getElementById('done-msg').textContent = `✅ ${total} slides exported!`;
+
+  } catch (err) {
+    setProgress(0, '❌ Error: ' + err.message);
+    console.error(err);
+  }
+
+  goBtn.disabled = false;
 });
-</script>
 
+function reset() {
+  currentFile = null;
+  fileInput.value = '';
+  dropZone.querySelector('.label').textContent = 'Drop your video or GIF here';
+  dropZone.querySelector('.sub').textContent = 'MP4, WebM, MOV, GIF · processed entirely in your browser';
+  document.getElementById('settings').style.display = 'none';
+  goBtn.style.display = 'none';
+  goBtn.disabled = false;
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('preview-wrap').style.display = 'none';
+  document.getElementById('preview-strip').innerHTML = '';
+  document.getElementById('done-wrap').style.display = 'none';
+  document.getElementById('progress-fill').style.width = '0%';
+}
+</script>
 </body>
 </html>
